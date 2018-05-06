@@ -34,8 +34,20 @@ class ProductTable extends Component {
   render() {
     const rows = [];
     let lastCategory = null;
+    const userInput = this.props.userInput;
+    const isStockOnly = this.props.isStockOnly;
 
     this.props.products.forEach(function(product) {
+      // Check if product name contains user input
+      if (product.name.indexOf(userInput) === -1) {
+        return;
+      }
+
+      // Check if isStockOnly is true and if product is in stock.
+      if (isStockOnly && !product.stocked) {
+        return;
+      }
+
       if (product.category !== lastCategory) {
         rows.push(
           <ProductCategoryRow
@@ -63,12 +75,27 @@ class ProductTable extends Component {
 }
 
 class SearchBar extends Component {
+  constructor(props) {
+    super(props);
+    this.onChange = this.onChange.bind(this);
+    this.onClick = this.onClick.bind(this);
+  }
+
+  onChange(e) {
+    this.props.handleUserInput(e.target.value);
+  }
+
+  onClick(e) {
+    this.props.handleCheckBox(e.target.checked);
+  }
+
   render() {
     return (
       <form>
-        <input type="text" placeholder="Search..." />
+        <input type="text" placeholder="Search..." onChange={this.onChange} />
         <p>
-          <input type="checkbox" /> Only show products in stock
+          <input type="checkbox" onClick={this.onClick} /> Only show products in
+          stock
         </p>
       </form>
     );
@@ -76,11 +103,34 @@ class SearchBar extends Component {
 }
 
 class FilterableProductTable extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { filterText: "", isStockOnly: false };
+
+    this.handleUserInput = this.handleUserInput.bind(this);
+    this.changeIsStock = this.changeIsStock.bind(this);
+  }
+
+  handleUserInput(input) {
+    this.setState({ filterText: input });
+  }
+
+  changeIsStock(isInStock) {
+    this.setState({ isStockOnly: isInStock });
+  }
+
   render() {
     return (
       <div>
-        <SearchBar />
-        <ProductTable products={this.props.products} />
+        <SearchBar
+          handleUserInput={this.handleUserInput}
+          handleCheckBox={this.changeIsStock}
+        />
+        <ProductTable
+          products={this.props.products}
+          userInput={this.state.filterText}
+          isStockOnly={this.state.isStockOnly}
+        />
       </div>
     );
   }
